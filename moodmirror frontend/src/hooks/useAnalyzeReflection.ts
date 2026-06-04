@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../lib/firebase';
 import type { AnalysisResult } from '../types';
+import { analyzeReflectionClient } from '../lib/geminiService';
 
 export function useAnalyzeReflection() {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,12 +10,8 @@ export function useAnalyzeReflection() {
     setIsLoading(true);
     setError(null);
     try {
-      const analyzeFn = httpsCallable<{ text: string }, { success: boolean; analysis: AnalysisResult }>(
-        functions,
-        'analyzeReflection'
-      );
-      const result = await analyzeFn({ text });
-      return result.data;
+      const result = await analyzeReflectionClient(text);
+      return { analysis: result };
     } catch (err: any) {
       console.error('Error analyzing reflection:', err);
       setError(err.message || 'Failed to analyze text');
