@@ -1,7 +1,6 @@
 {
   "firestore": {
-    "rules": "moodmirror-backend/moodmirror/firestore.rules",
-    "indexes": "moodmirror-backend/moodmirror/firestore.indexes.json"
+    "rules": "firestore.rules"
   },
   "functions": [
     {

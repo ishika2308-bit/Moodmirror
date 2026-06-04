@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the user is accessing their own data
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Journal Entries
+    match /journal_entries/{entryId} {
+      allow read, write: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Analysis Reports
+    match /analysis_reports/{reportId} {
+      allow read, write: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Weekly Reports
+    match /weekly_reports/{reportId} {
+      allow read, write: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow read, update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    // Mood Profiles
+    match /mood_profiles/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+  }
+}
