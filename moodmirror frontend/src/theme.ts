@@ -1,0 +1,50 @@
+export const themes = {
+  hopeful: {
+    gradient: 'linear-gradient(135deg, #FFDFD6 0%, #FFEEDF 50%, #E2F0F9 100%)',
+    coreColors: ['#FFC6B3', '#9DD9FC'],
+    text: '#5A4545',
+    subtext: '#8A7373',
+    cardBg: 'rgba(255, 255, 255, 0.4)',
+    border: 'rgba(255, 255, 255, 0.6)',
+  },
+  calm: {
+    gradient: 'linear-gradient(135deg, #E2F4F3 0%, #F2FCFC 50%, #F5F9FA 100%)',
+    coreColors: ['#9CD3D5', '#FFFFFF'],
+    text: '#3E5C60',
+    subtext: '#6A8A8E',
+    cardBg: 'rgba(255, 255, 255, 0.4)',
+    border: 'rgba(255, 255, 255, 0.6)',
+  },
+  reflective: {
+    gradient: 'linear-gradient(135deg, #EBE6F5 0%, #F7F5FC 40%, #E3EAF7 100%)',
+    coreColors: ['#CAB3E8', '#AEC0E8'],
+    text: '#48425A',
+    subtext: '#7B758F',
+    cardBg: 'rgba(255, 255, 255, 0.4)',
+    border: 'rgba(255, 255, 255, 0.7)',
+  },
+  excited: {
+    gradient: 'linear-gradient(135deg, #FFECBC 0%, #FFD6D6 50%, #D4F4F4 100%)',
+    coreColors: ['#FF9E9E', '#FFDA73'],
+    text: '#5C4A3D',
+    subtext: '#8F7868',
+    cardBg: 'rgba(255, 255, 255, 0.4)',
+    border: 'rgba(255, 255, 255, 0.7)',
+  },
+  stressed: {
+    gradient: 'radial-gradient(circle at top right, #F0DBCE 0%, #EBD5D3 50%, #E6CCCB 100%)',
+    coreColors: ['#D67C52', '#B35E5B'],
+    text: '#593F31',
+    subtext: '#856A5B',
+    cardBg: 'rgba(255, 255, 255, 0.2)',
+    border: 'rgba(255, 255, 255, 0.4)',
+  },
+  neutral: {
+    gradient: 'linear-gradient(135deg, #F5F7FA 0%, #FFFFFF 50%, #F0F4F8 100%)',
+    coreColors: ['#D1D9E6', '#FFFFFF'],
+    text: '#334155',
+    subtext: '#64748B',
+    cardBg: 'rgba(255, 255, 255, 0.5)',
+    border: 'rgba(255, 255, 255, 0.8)',
+  }
+};

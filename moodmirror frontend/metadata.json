@@ -1,0 +1,8 @@
+{
+  "name": "MoodMirror",
+  "description": "See what your emotions have been trying to tell you.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
