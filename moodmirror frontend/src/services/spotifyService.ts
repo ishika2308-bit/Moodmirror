@@ -1,11 +1,15 @@
 // src/services/spotifyService.ts
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { Capacitor, CapacitorHttp, type HttpResponse } from '@capacitor/core';
 
 const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 
-const isCapacitor = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
-const REDIRECT_URI = isCapacitor ? 'moodmirror://spotify-callback' : window.location.origin + '/spotify-callback';
+const getRedirectUri = () => {
+  return Capacitor.isNativePlatform() 
+    ? 'moodmirror://spotify-callback' 
+    : window.location.origin + '/spotify-callback';
+};
 
 // PKCE Utils
 const generateRandomString = (length: number) => {
@@ -26,6 +30,30 @@ const base64encode = (input: ArrayBuffer) => {
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 }
+
+const parseJsonOrThrow = (rawBody: string, status: number, label: string) => {
+  console.log(`[SpotifyService] [${label}] Raw response body before JSON.parse():`, rawBody);
+  try {
+    const parsed = JSON.parse(rawBody);
+    console.log(`[SpotifyService] [${label}] Parsed response result:`, parsed);
+    return parsed;
+  } catch (err: any) {
+    const preview = rawBody.slice(0, 180);
+    console.error(`[SpotifyService] [${label}] returned non-JSON response:`, {
+      status,
+      preview,
+      error: err.message,
+    });
+    throw new Error(`${label} returned non-JSON response (${status}): ${preview}`);
+  }
+};
+
+const normalizeCapacitorResponseData = (response: HttpResponse) => {
+  if (typeof response.data === 'string') {
+    return parseJsonOrThrow(response.data, response.status, 'Spotify token endpoint');
+  }
+  return response.data;
+};
 
 export const initiateSpotifyLogin = async () => {
   if (!SPOTIFY_CLIENT_ID) {
@@ -50,40 +78,93 @@ export const initiateSpotifyLogin = async () => {
     scope,
     code_challenge_method: 'S256',
     code_challenge: codeChallenge,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: getRedirectUri(),
   };
 
   authUrl.search = new URLSearchParams(params).toString();
-  console.log("EXACT SPOTIFY REDIRECT URI:", REDIRECT_URI);
+  console.log("EXACT SPOTIFY REDIRECT URI:", getRedirectUri());
   window.location.href = authUrl.toString();
 };
 
 export const handleSpotifyCallback = async (code: string) => {
   const codeVerifier = localStorage.getItem('spotify_code_verifier');
+  const redirectUri = getRedirectUri();
+  console.log('[SpotifyService] Starting token exchange:', {
+    codePresent: !!code,
+    codeVerifierPresent: !!codeVerifier,
+    redirectUri,
+  });
   
   if (!codeVerifier) {
     throw new Error("No code verifier found in local storage");
   }
 
-  const payload = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: SPOTIFY_CLIENT_ID,
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: REDIRECT_URI,
-      code_verifier: codeVerifier,
-    }),
-  };
+  const tokenRequestBody = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: redirectUri,
+    code_verifier: codeVerifier,
+  }).toString();
 
-  const body = await fetch("https://accounts.spotify.com/api/token", payload);
-  const response = await body.json();
+  const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
+  console.log('[SpotifyService] Exact token exchange endpoint:', TOKEN_ENDPOINT);
+  console.log('[SpotifyService] Token request body:', tokenRequestBody);
 
-  if (response.error) {
-    throw new Error(response.error_description || "Failed to fetch Spotify token");
+  let response: any;
+  let status = 0;
+  let ok = false;
+
+  if (Capacitor.isNativePlatform()) {
+    // NOTE: CapacitorHttp does NOT support responseType:'json' — omitting it prevents
+    // the plugin from issuing a CORS preflight that returns "Active preflights are not allowed".
+    // normalizeCapacitorResponseData() handles string→JSON parsing safely.
+    console.log('[SpotifyService] Token exchange via CapacitorHttp (native)');
+    const nativeResponse = await CapacitorHttp.post({
+      url: TOKEN_ENDPOINT,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      data: tokenRequestBody,
+    }) as any;
+    status = nativeResponse.status;
+    ok = status >= 200 && status < 300;
+    console.log('[SpotifyService] Capacitor HTTP status:', status);
+    console.log('[SpotifyService] Capacitor native response data type:', typeof nativeResponse.data);
+    console.log('[SpotifyService] Capacitor native raw response:', 
+      typeof nativeResponse.data === 'string' ? nativeResponse.data.slice(0, 300) : nativeResponse.data
+    );
+    response = normalizeCapacitorResponseData(nativeResponse);
+  } else {
+    console.log('[SpotifyService] Token exchange via fetch (web)');
+    const body = await fetch(TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: tokenRequestBody,
+    });
+    status = body.status;
+    ok = body.ok;
+    console.log('[SpotifyService] Fetch HTTP status:', status);
+    const rawText = await body.text();
+    console.log('[SpotifyService] Raw response body (web):', rawText);
+    response = parseJsonOrThrow(rawText, status, 'Spotify token endpoint');
+  }
+
+  console.log('[SpotifyService] Token exchange response:', {
+    ok,
+    status,
+    error: response?.error,
+    errorDescription: response?.error_description,
+    hasAccessToken: !!response?.access_token,
+    hasRefreshToken: !!response?.refresh_token,
+  });
+
+  if (!ok || response?.error) {
+    throw new Error(response?.error_description || "Failed to fetch Spotify token");
   }
 
   localStorage.setItem('spotify_access_token', response.access_token);
@@ -99,15 +180,48 @@ export const fetchSpotifyProfileAndStats = async (accessToken: string) => {
 
   // Fetch Profile
   const profileRes = await fetch("https://api.spotify.com/v1/me", { headers });
-  const profile = await profileRes.json();
+  const profileRaw = await profileRes.text();
+  console.log('[SpotifyService] Profile raw response:', { status: profileRes.status, body: profileRaw });
+  const profile = parseJsonOrThrow(profileRaw, profileRes.status, 'Spotify profile endpoint');
+  console.log('[SpotifyService] Profile response:', {
+    ok: profileRes.ok,
+    status: profileRes.status,
+    spotifyUserId: profile.id,
+    error: profile.error,
+  });
+  if (!profileRes.ok) {
+    throw new Error(profile.error?.message || 'Failed to fetch Spotify profile');
+  }
 
   // Fetch Top Tracks (Limit 10)
   const tracksRes = await fetch("https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term", { headers });
-  const topTracksData = await tracksRes.json();
+  const tracksRaw = await tracksRes.text();
+  console.log('[SpotifyService] Top tracks raw response:', { status: tracksRes.status, body: tracksRaw });
+  const topTracksData = parseJsonOrThrow(tracksRaw, tracksRes.status, 'Spotify top tracks endpoint');
+  console.log('[SpotifyService] Top tracks response:', {
+    ok: tracksRes.ok,
+    status: tracksRes.status,
+    count: topTracksData.items?.length || 0,
+    error: topTracksData.error,
+  });
+  if (!tracksRes.ok) {
+    throw new Error(topTracksData.error?.message || 'Failed to fetch Spotify top tracks');
+  }
 
   // Fetch Top Artists (Limit 10)
   const artistsRes = await fetch("https://api.spotify.com/v1/me/top/artists?limit=10&time_range=short_term", { headers });
-  const topArtistsData = await artistsRes.json();
+  const artistsRaw = await artistsRes.text();
+  console.log('[SpotifyService] Top artists raw response:', { status: artistsRes.status, body: artistsRaw });
+  const topArtistsData = parseJsonOrThrow(artistsRaw, artistsRes.status, 'Spotify top artists endpoint');
+  console.log('[SpotifyService] Top artists response:', {
+    ok: artistsRes.ok,
+    status: artistsRes.status,
+    count: topArtistsData.items?.length || 0,
+    error: topArtistsData.error,
+  });
+  if (!artistsRes.ok) {
+    throw new Error(topArtistsData.error?.message || 'Failed to fetch Spotify top artists');
+  }
 
   // Extract Genres from Artists
   const allGenres = topArtistsData.items.flatMap((artist: any) => artist.genres);
@@ -130,13 +244,18 @@ export const fetchSpotifyProfileAndStats = async (accessToken: string) => {
 
 export const saveSpotifyProfileToFirestore = async (uid: string, data: any) => {
   const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
+  console.log('[SpotifyService] Saving Spotify connection state:', {
+    uid,
+    spotifyUserId: data?.spotifyUserId,
+  });
+  await setDoc(userRef, {
     spotifyProfile: {
       spotifyConnected: true,
       spotifyLastSyncedAt: new Date().toISOString(),
       ...data
     }
-  });
+  }, { merge: true });
+  console.log('[SpotifyService] Spotify connection state saved');
 };
 
 export const getSpotifyProfileFromFirestore = async (uid: string) => {

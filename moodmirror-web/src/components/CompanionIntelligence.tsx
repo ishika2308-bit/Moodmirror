@@ -68,7 +68,7 @@ interface NodeProps {
   className?: string;
 }
 
-const IntelligenceNode: React.FC<NodeProps> = ({ icon, title, text, delay, color, className = "" }) => {
+const IntelligenceNode: React.FC<NodeProps> = ({ icon, title, text, delay: _delay, color, className = "" }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,

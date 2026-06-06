@@ -2,6 +2,14 @@
 
 MoodMirror AI is a voice-first, emotionally intelligent journaling application. Designed to feel like a living mirror rather than a traditional text box, it allows users to reflect on their day through natural voice interaction, powered by Google's Gemini AI and secured by Firebase.
 
+## 📱 Download Android App
+
+The official production-ready Android application is available for download! You can download it directly from the GitHub releases page:
+
+👉 **[Download MoodMirror v1.0 APK](https://github.com/ishika2308-bit/Moodmirror/releases/download/moodmirror-v1-gift/MoodMirror-v1.0-release.apk)**
+
+*Note: Since this is a self-published application (signed release APK), your phone may prompt you with a "Blocked by Play Protect" or "Unknown Source" warning. You can safely select "Install Anyway" to proceed.*
+
 ## Features
 
 - **The Mirror Core:** A dynamic, glassmorphic sphere that reacts visually to your emotional state and voice volume.

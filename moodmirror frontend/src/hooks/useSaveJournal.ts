@@ -49,19 +49,35 @@ export function useSaveJournal() {
       // Upload photos if provided
       const attachments: PhotoAttachment[] = [];
       if (photos && photos.length > 0) {
+        console.log(`[useSaveJournal] Starting upload of ${photos.length} photos`);
         for (let i = 0; i < photos.length; i++) {
           const file = photos[i];
+          console.log(`[useSaveJournal] Processing photo ${i}:`, { name: file.name, size: file.size, type: file.type });
           let url = URL.createObjectURL(file);
           let storagePath = `mock-path-${Date.now()}`;
 
           if (uid !== 'dev-user-123') {
             storagePath = `users/${uid}/memories/${entryRef.id}/${file.name}-${Date.now()}`;
             const fileRef = ref(storage, storagePath);
-            await uploadBytes(fileRef, file);
-            url = await getDownloadURL(fileRef);
+            console.log(`[useSaveJournal] Starting uploadBytes for photo ${i} at path:`, storagePath);
+            try {
+              await uploadBytes(fileRef, file);
+              console.log(`[useSaveJournal] uploadBytes succeeded for photo ${i}`);
+            } catch (uploadErr: any) {
+              console.error(`[useSaveJournal] uploadBytes FAILED for photo ${i}:`, uploadErr.message);
+              throw uploadErr;
+            }
+            try {
+              url = await getDownloadURL(fileRef);
+              console.log(`[useSaveJournal] getDownloadURL succeeded for photo ${i}:`, url);
+            } catch (dlErr: any) {
+              console.error(`[useSaveJournal] getDownloadURL FAILED for photo ${i}:`, dlErr.message);
+              throw dlErr;
+            }
           }
 
           // Get image dimensions
+          console.log(`[useSaveJournal] Getting dimensions for photo ${i}`);
           const dimensions = await Promise.race([
             new Promise<{width: number, height: number}>((resolve) => {
               const img = new Image();
@@ -71,6 +87,7 @@ export function useSaveJournal() {
             }),
             new Promise<{width: number, height: number}>((resolve) => setTimeout(() => resolve({ width: 800, height: 600 }), 2000))
           ]);
+          console.log(`[useSaveJournal] Dimensions for photo ${i}:`, dimensions);
 
           const type = determinePhotoType(file.type);
           const isImportant = (analysis.moodScore && (analysis.moodScore > 80 || analysis.moodScore < 20)) || false;
@@ -88,7 +105,9 @@ export function useSaveJournal() {
               createdAt: new Date(),
             }
           });
+          console.log(`[useSaveJournal] Photo ${i} fully processed`);
         }
+        console.log(`[useSaveJournal] All ${photos.length} photos uploaded successfully`);
       }
 
       batch.set(entryRef, {

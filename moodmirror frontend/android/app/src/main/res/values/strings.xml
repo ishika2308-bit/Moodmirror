@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">MoodMirror</string>
     <string name="title_activity_main">MoodMirror</string>
-    <string name="package_name">com.moodmirror.app</string>
-    <string name="custom_url_scheme">com.moodmirror.app</string>
+    <string name="package_name">com.sunshine.moodmirror</string>
+    <string name="custom_url_scheme">com.sunshine.moodmirror</string>
+    <string name="server_client_id">164954051007-ou8u320uiptqrs2gnognfjfg9u6ddlnq.apps.googleusercontent.com</string>
     <string name="publisher">Sunshine Pvt. Ltd.</string>
 </resources>

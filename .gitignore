@@ -43,3 +43,8 @@ moodmirror-backend/moodmirror/functions/.env
 *key*.json
 credentials.json
 secrets.json
+*.jks
+
+# Android binaries
+*.apk
+*.zip

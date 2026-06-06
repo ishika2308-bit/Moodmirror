@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,7 +31,7 @@ export const OrbParticles: React.FC<OrbParticlesProps> = ({ count = 40, isAwake 
     });
   }, [count]);
 
-  useFrame((state) => {
+  useFrame((_state) => {
     if (!groupRef.current) return;
     
     // Rotate the entire particle cloud slowly
@@ -73,7 +73,7 @@ interface ParticleProps {
   isAwake: boolean;
 }
 
-const Particle: React.FC<ParticleProps> = ({ position, scale, speed, offset, isAwake }) => {
+const Particle: React.FC<ParticleProps> = ({ position, scale, speed, offset, isAwake: _isAwake }) => {
   const ref = useRef<THREE.InstancedMesh>(null);
   
   useFrame((state) => {

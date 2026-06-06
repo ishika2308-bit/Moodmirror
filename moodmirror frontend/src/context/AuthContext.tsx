@@ -6,10 +6,22 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signInWithCredential
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+
+// Initialize native GoogleAuth if running on a native platform
+if (Capacitor.isNativePlatform()) {
+  GoogleAuth.initialize({
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+    scopes: ['profile', 'email'],
+    grantOfflineAccess: true,
+  });
+}
 
 interface UserProfile {
   uid: string;
@@ -93,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkRedirect = async () => {
+      if (Capacitor.isNativePlatform()) return;
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
@@ -123,17 +136,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        await signInWithRedirect(auth, provider);
+      if (Capacitor.isNativePlatform()) {
+        console.log("[GoogleAuth] 1. Starting GoogleAuth.signIn()...");
+        const googleUser = await GoogleAuth.signIn();
+        console.log("[GoogleAuth] 2. GoogleAuth.signIn() returned:", JSON.stringify(googleUser));
+        
+        const idToken = googleUser?.authentication?.idToken;
+        console.log("[GoogleAuth] 3. ID token retrieved:", idToken ? "Length: " + idToken.length : "None");
+        
+        if (!idToken) {
+          throw new Error("No ID Token returned from GoogleAuth.signIn()");
+        }
+        
+        console.log("[GoogleAuth] 4. Creating Firebase credential with ID Token...");
+        const credential = GoogleAuthProvider.credential(idToken);
+        console.log("[GoogleAuth] 4b. Firebase credential created:", JSON.stringify(credential));
+        
+        console.log("[GoogleAuth] 5. Signing in with Firebase signInWithCredential()...");
+        const result = await signInWithCredential(auth, credential);
+        console.log("[GoogleAuth] 6. Firebase native auth success. User UID:", result.user?.uid);
+        
+        await handleUserDoc(result.user);
       } else {
         const result = await signInWithPopup(auth, provider);
-        console.log("auth success for user:", result.user.uid);
+        console.log("Web auth success for user:", result.user.uid);
         await handleUserDoc(result.user);
       }
-    } catch (error) {
-      console.error("Auth error", error);
+    } catch (error: any) {
+      console.error("[GoogleAuth] Error during authentication:", error);
+      if (Capacitor.isNativePlatform()) {
+        alert("[GoogleAuth] Error: " + (error?.message || error) + "\nDetails: " + JSON.stringify(error));
+      }
       throw error;
     }
   };
