@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', 'Georgia', serif;
+}
+
+:root {
+  /* Match the App's Aurora Theme Base */
+  --bg-color: #FAFAFA; /* Soft Ivory */
+  --bg-gradient: linear-gradient(135deg, #FAFAFA 0%, #F9F3E3 50%, #E8D7F8 100%);
+  --c-text: #5A4A35;
+  --c-subtext: #8B7B69;
+  
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.8);
+}
+
+body {
+  margin: 0;
+  color: var(--c-text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  
+  /* Animated Aurora Gradient Background */
+  background: linear-gradient(-45deg, #FAFAFA, #F9F3E3, #E8D7F8, #F1E5F5);
+  background-size: 400% 400%;
+  animation: aurora-bg 15s ease infinite;
+}
+
+@keyframes aurora-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glassmorphism utilities */
+@layer utilities {
+  .surface-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

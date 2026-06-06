@@ -1,29 +1,35 @@
 import { motion } from 'motion/react';
-import { themes } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 import type { EmotionState, MirrorState } from '../../types';
+import type { EmotionPalette } from '../../theme';
 
 interface MirrorCoreProps {
-  emotionState?: EmotionState;
-  mirrorState?: MirrorState;
+  emotion?: EmotionState; // renamed from emotionState for consistency with usage
+  state?: MirrorState;    // renamed from mirrorState for consistency with usage
   audioLevel?: number;       // 0-1, drives audio-reactive animations
+  volumeLevels?: number[];   // for the volume bars
   onTap?: () => void;
   isWriting?: boolean;       // Legacy compat for JournalView
+  overridePalette?: EmotionPalette;
 }
 
 export default function MirrorCore({ 
-  emotionState = 'neutral', 
-  mirrorState = 'idle',
+  emotion = 'neutral', 
+  state = 'idle',
   audioLevel = 0,
+  volumeLevels = [],
   onTap,
   isWriting = false,
+  overridePalette,
 }: MirrorCoreProps) {
-  const theme = themes[emotionState];
+  const { getPalette } = useTheme();
+  const theme = overridePalette || getPalette(emotion);
   const colors = theme.coreColors;
 
   // Derive animation parameters from mirror state
-  const isActive = mirrorState === 'listening' || isWriting;
-  const isProcessing = mirrorState === 'processing';
-  const isReflecting = mirrorState === 'reflecting';
+  const isActive = state === 'listening' || isWriting;
+  const isProcessing = state === 'processing';
+  const isReflecting = state === 'reflecting';
 
   // Audio-reactive scale boost (0 to 0.15 range)
   const audioScale = isActive ? audioLevel * 0.15 : 0;

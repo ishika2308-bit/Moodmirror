@@ -1,0 +1,13 @@
+.masonry-list {
+  position: relative;
+  width: 100%;
+}
+
+.masonry-item-wrapper {
+  position: absolute;
+  will-change: transform, width, height, opacity;
+  padding: 12px;
+  top: 0;
+  left: 0;
+  width: 100%;
+}

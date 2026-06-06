@@ -39,6 +39,7 @@
   border: 1px solid var(--c-border);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 24px var(--bento-spotlight);
 }
 
 /* Magic Bento Classes */
@@ -50,6 +51,7 @@
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
   border: 1px solid transparent; /* Replaced by pseudo-element */
+  box-shadow: 0 8px 32px var(--bento-spotlight);
   transition: all 0.5s ease;
 }
 
@@ -91,3 +93,43 @@
   }
 }
 
+/* MagicBento-style border glow for Patterns cards */
+.patterns-bento-card {
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+}
+
+.patterns-bento-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 4px;
+  background: radial-gradient(
+    300px circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-rgb, 132, 0, 255), calc(var(--glow-intensity) * 0.6)) 0%,
+    rgba(var(--glow-rgb, 132, 0, 255), calc(var(--glow-intensity) * 0.25)) 30%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+.patterns-bento-card:hover {
+  box-shadow:
+    0 8px 32px var(--bento-spotlight),
+    0 0 24px var(--bento-spotlight);
+}
+
+.export-mode * { opacity: 1 !important; transform: none !important; }
+.export-mode { height: auto !important; overflow: visible !important; }

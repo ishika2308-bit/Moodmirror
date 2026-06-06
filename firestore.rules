@@ -34,5 +34,14 @@ service cloud.firestore {
     match /mood_profiles/{userId} {
       allow read, write: if isAuthenticated() && isOwner(userId);
     }
+    
+    // Memory Engine (Phase 2)
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      
+      match /{document=**} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+    }
   }
 }

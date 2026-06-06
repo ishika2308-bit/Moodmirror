@@ -138,6 +138,14 @@ export function useSpeechRecognition(
     setTranscript('');
     setInterimTranscript('');
 
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {
+        // ignore
+      }
+    }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -187,10 +195,15 @@ export function useSpeechRecognition(
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.error("Failed to stop recognition", e);
+      }
     }
     stopAudioMonitoring();
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    setIsListening(false);
   }, [stopAudioMonitoring]);
 
   const resetTranscript = useCallback(() => {

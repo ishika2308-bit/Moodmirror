@@ -1,0 +1,62 @@
+.pixel-card-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  display: block;
+}
+
+.pixel-card-bg {
+  position: absolute;
+  inset: 0;
+  transition: all 0.5s ease;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.pixel-card-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(32px, 1fr));
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  mix-blend-mode: overlay;
+}
+
+.pixel-card-wrapper:hover .pixel-card-grid {
+  opacity: 1;
+}
+
+.pixel-card-pixel {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border-radius: 4px;
+}
+
+.pixel-card-wrapper:hover .pixel-card-pixel {
+  animation: pixelBlink infinite alternate ease-in-out;
+}
+
+@keyframes pixelBlink {
+  0% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+.pixel-card-content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pixel-card-content > * {
+  pointer-events: auto;
+}
